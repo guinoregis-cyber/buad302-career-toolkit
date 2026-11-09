@@ -1,0 +1,115 @@
+---
+import { composeFollowUp, EMPTY } from '../lib/followup';
+const initial = composeFollowUp(EMPTY);
+---
+<div class="builder" data-builder>
+  <form class="builder-form" onsubmit="return false">
+    <fieldset class="row">
+      <legend>Sending by</legend>
+      <label class="inline"><input type="radio" name="channel" value="email" checked /> Email</label>
+      <label class="inline"><input type="radio" name="channel" value="linkedin" /> LinkedIn message</label>
+    </fieldset>
+
+    <label for="mb-theirName">Their first name</label>
+    <input id="mb-theirName" name="theirName" type="text" autocomplete="off" placeholder="e.g., Jordan" />
+
+    <label for="mb-event">Where you met</label>
+    <input id="mb-event" name="event" type="text" autocomplete="off" placeholder="e.g., the Marshall finance panel" />
+
+    <label for="mb-detail">One specific thing they said that stuck with you <span class="req">(required)</span></label>
+    <p class="hint" id="mb-detail-hint">Write it so it finishes the sentence "I especially appreciated…"</p>
+    <input id="mb-detail" name="detail" type="text" autocomplete="off" aria-describedby="mb-detail-hint"
+      placeholder="e.g., your advice to talk to people on more than one team" />
+
+    <label for="mb-why">Why it mattered to you <span class="opt">(optional)</span></label>
+    <input id="mb-why" name="why" type="text" autocomplete="off"
+      placeholder="e.g., I had only been looking at one team, so I'm widening my search" />
+
+    <label for="mb-ask">Next step</label>
+    <select id="mb-ask" name="ask">
+      <option value="resource" selected>Ask if they'd recommend a person or resource</option>
+      <option value="question">Ask one specific question</option>
+      <option value="stay">Say you'd like to stay in touch</option>
+      <option value="none">No ask, just thanks</option>
+    </select>
+
+    <div data-question-wrap hidden>
+      <label for="mb-question">Your question</label>
+      <input id="mb-question" name="question" type="text" autocomplete="off"
+        placeholder="e.g., what skills helped you most in your first year" />
+    </div>
+
+    <label for="mb-yourName">Your name</label>
+    <input id="mb-yourName" name="yourName" type="text" autocomplete="off" />
+  </form>
+
+  <div class="builder-preview">
+    <label for="mb-output">Preview</label>
+    <textarea id="mb-output" readonly rows="14">{initial}</textarea>
+    <p class="warn" data-warn role="status"></p>
+    <div class="builder-actions">
+      <button type="button" data-copy hidden>Copy message</button>
+      <span class="meta" data-count aria-live="polite"></span>
+    </div>
+    <noscript><p class="hint">The live preview needs JavaScript. Use the template above and fill in the brackets yourself.</p></noscript>
+    <p class="hint">Nothing you type is sent or stored. It disappears when you leave the page.</p>
+  </div>
+</div>
+
+<script>
+  import { composeFollowUp, wordCount, type FollowUpFields } from '../lib/followup';
+
+  document.querySelectorAll<HTMLElement>('[data-builder]').forEach((root) => {
+    const form = root.querySelector('form')!;
+    const output = root.querySelector<HTMLTextAreaElement>('textarea')!;
+    const warn = root.querySelector<HTMLElement>('[data-warn]')!;
+    const count = root.querySelector<HTMLElement>('[data-count]')!;
+    const copy = root.querySelector<HTMLButtonElement>('[data-copy]')!;
+    const qWrap = root.querySelector<HTMLElement>('[data-question-wrap]')!;
+    copy.hidden = false;
+
+    const read = (): FollowUpFields => {
+      const d = new FormData(form);
+      const v = (k: string) => String(d.get(k) ?? '');
+      return {
+        channel: v('channel') === 'linkedin' ? 'linkedin' : 'email',
+        theirName: v('theirName'),
+        event: v('event'),
+        detail: v('detail'),
+        why: v('why'),
+        ask: v('ask') as FollowUpFields['ask'],
+        question: v('question'),
+        yourName: v('yourName'),
+      };
+    };
+
+    const render = () => {
+      const f = read();
+      qWrap.hidden = f.ask !== 'question';
+      const text = composeFollowUp(f);
+      output.value = text;
+      count.textContent = `${wordCount(text)} words`;
+      const msgs: string[] = [];
+      if (!f.detail.trim()) msgs.push('Add one specific detail. Without it, this reads like a message sent to everyone.');
+      if (f.ask === 'question' && !f.question.trim()) msgs.push('Add your question, or pick a different next step.');
+      if (/\[[^\]]+\]/.test(text)) msgs.push('Fill in the [brackets] before sending.');
+      warn.textContent = msgs.join(' ');
+    };
+
+    form.addEventListener('input', render);
+    form.addEventListener('change', render);
+
+    copy.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(output.value);
+        copy.textContent = 'Copied';
+      } catch {
+        output.select();
+        copy.textContent = 'Press Ctrl+C / Cmd+C to copy';
+      }
+      setTimeout(() => (copy.textContent = 'Copy message'), 2500);
+    });
+
+    render();
+  });
+</script>

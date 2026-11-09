@@ -6,7 +6,7 @@ import { z } from 'astro/zod';
 // so a playbook missing a required field fails the build instead of shipping broken.
 // No "last reviewed" dates: content must be written so it never needs review.
 const playbooks = defineCollection({
-  loader: glob({ pattern: '**/*.md', base: './src/content/playbooks' }),
+  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/playbooks' }),
   schema: z.object({
     title: z.string(),
     summary: z.string(),

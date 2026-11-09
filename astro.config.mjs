@@ -1,5 +1,6 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
+import mdx from '@astrojs/mdx';
 
 // Zero-maintenance setup:
 // - The built site goes into /docs and is committed to the repo.
@@ -10,4 +11,5 @@ export default defineConfig({
   base: '/buad302-career-toolkit',
   outDir: './docs',
   trailingSlash: 'always',
+  integrations: [mdx()],
 });

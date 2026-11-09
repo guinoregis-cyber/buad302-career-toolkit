@@ -1,17 +1,35 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { getCollection, render } from 'astro:content';
+import { STAGES, PILLARS } from '../../lib/labels';
+import { url } from '../../lib/url';
 
 export async function getStaticPaths() {
   const playbooks = await getCollection('playbooks');
-  return playbooks.map((entry) => ({ params: { id: entry.id }, props: { entry } }));
+  return playbooks.map((entry) => ({ params: { id: entry.id }, props: { entry, all: playbooks } }));
 }
 
-const { entry } = Astro.props;
+const { entry, all } = Astro.props;
 const { Content } = await render(entry);
+const d = entry.data;
+// Only link to the next playbook if it exists, so an unwritten one never becomes a broken link.
+const next = d.next ? all.find((p) => p.id === d.next) : undefined;
 ---
-<Base title={entry.data.title}>
-  <h1>{entry.data.title}</h1>
-  <p>{entry.data.summary}</p>
-  <Content />
+<Base title={d.title}>
+  <article class="playbook">
+    <header class="playbook-head">
+      <p class="eyebrow">{d.stages.map((s) => STAGES[s]).join(' · ')}</p>
+      <h1>{d.title}</h1>
+      <p class="lede">{d.summary}</p>
+      <p class="meta">{d.minutes} min read · {PILLARS[d.pillar]}</p>
+    </header>
+    <Content />
+    {next && (
+      <nav class="next" aria-label="Next playbook">
+        <p class="eyebrow">Next</p>
+        <a href={url(`playbooks/${next.id}/`)}>{next.data.title}</a>
+        <p>{next.data.summary}</p>
+      </nav>
+    )}
+  </article>
 </Base>

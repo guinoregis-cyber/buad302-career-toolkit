@@ -1,0 +1,70 @@
+---
+interface Props {
+  id: string;
+  items: string[];
+}
+const { id, items } = Astro.props;
+---
+<section class="checklist" data-checklist={id} aria-labelledby={`cl-${id}`}>
+  <h2 id={`cl-${id}`}>Checklist</h2>
+  <p class="meta" data-progress aria-live="polite"></p>
+  <ul>
+    {items.map((item) => (
+      <li>
+        <label><input type="checkbox" /> <span>{item}</span></label>
+      </li>
+    ))}
+  </ul>
+  <p class="hint" data-storage-note hidden>
+    Progress is saved only in this browser on this device. Clearing your browser data resets it.
+  </p>
+  <button type="button" class="secondary" data-reset hidden>Reset checklist</button>
+</section>
+
+<script>
+  const PREFIX = 'bct:checklist:';
+  const load = (id: string): boolean[] => {
+    try {
+      return JSON.parse(localStorage.getItem(PREFIX + id) || '[]');
+    } catch {
+      return [];
+    }
+  };
+  const save = (id: string, value: boolean[]): boolean => {
+    try {
+      localStorage.setItem(PREFIX + id, JSON.stringify(value));
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  document.querySelectorAll<HTMLElement>('[data-checklist]').forEach((root) => {
+    const id = root.dataset.checklist!;
+    const boxes = Array.from(root.querySelectorAll<HTMLInputElement>('input[type="checkbox"]'));
+    const progress = root.querySelector<HTMLElement>('[data-progress]')!;
+    const reset = root.querySelector<HTMLButtonElement>('[data-reset]')!;
+    const note = root.querySelector<HTMLElement>('[data-storage-note]')!;
+
+    const saved = load(id);
+    boxes.forEach((b, i) => (b.checked = Boolean(saved[i])));
+
+    const update = () => {
+      const done = boxes.filter((b) => b.checked).length;
+      progress.textContent = `${done} of ${boxes.length} done`;
+      if (!save(id, boxes.map((b) => b.checked))) {
+        note.textContent = 'This browser is not saving progress (private browsing may block it).';
+      }
+    };
+
+    boxes.forEach((b) => b.addEventListener('change', update));
+    reset.addEventListener('click', () => {
+      boxes.forEach((b) => (b.checked = false));
+      update();
+    });
+
+    reset.hidden = false;
+    note.hidden = false;
+    update();
+  });
+</script>
