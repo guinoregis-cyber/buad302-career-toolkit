@@ -1,0 +1,31 @@
+---
+import { SITE } from '../site.config';
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+}
+const { title } = Astro.props;
+const pageTitle = title ? `${title} | ${SITE.name}` : SITE.name;
+import { url } from '../lib/url';
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href={url()}>{SITE.name}</a>
+    </header>
+    <main>
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <p>{SITE.disclaimer}</p>
+      <p>Created {SITE.createdTerm}.</p>
+    </footer>
+  </body>
+</html>

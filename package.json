@@ -1,0 +1,14 @@
+{
+  "name": "buad302-career-toolkit",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "astro": "^7.4.8"
+  },
+  "private": true,
+  "type": "module"
+}

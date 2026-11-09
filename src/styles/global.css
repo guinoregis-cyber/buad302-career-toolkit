@@ -1,0 +1,29 @@
+/* Placeholder styles. Replaced during the two-screen design step.
+   System fonts only: no external font or CDN that could disappear. */
+:root {
+  --bg: #f8f7f4;
+  --ink: #17212f;
+  --accent: #990000;
+  --neutral: #e8e5de;
+  --max: 44rem;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.6;
+}
+
+.site-header, main, .site-footer {
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: 1.25rem;
+}
+
+.brand { color: var(--ink); font-weight: 700; text-decoration: none; }
+a { color: var(--accent); }
+.site-footer { border-top: 1px solid var(--neutral); font-size: 0.875rem; }

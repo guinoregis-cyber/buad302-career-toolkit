@@ -1,0 +1,19 @@
+---
+import Base from '../layouts/Base.astro';
+import { SITE } from '../site.config';
+import { getCollection } from 'astro:content';
+
+const playbooks = (await getCollection('playbooks')).sort((a, b) => a.data.order - b.data.order);
+import { url } from '../lib/url';
+---
+<Base>
+  <h1>{SITE.name}</h1>
+  <p>{SITE.tagline}</p>
+  <p><em>Under construction. This page proves the publishing pipeline works.</em></p>
+  <h2>Playbooks</h2>
+  <ul>
+    {playbooks.map((p) => (
+      <li><a href={url(`playbooks/${p.id}/`)}>{p.data.title}</a> ({p.data.minutes} min)</li>
+    ))}
+  </ul>
+</Base>
