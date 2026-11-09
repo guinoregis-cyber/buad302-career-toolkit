@@ -54,7 +54,7 @@ const id = (name: string) => `${kind}-${name}`;
     <textarea id={id('output')} readonly rows="16">{initial}</textarea>
     <p class="warn" data-warn role="status"></p>
     <div class="builder-actions">
-      <button type="button" data-copy hidden>Copy message</button>
+      <button type="button" data-copy hidden>{t.copyLabel ?? 'Copy message'}</button>
       <span class="meta" data-count aria-live="polite"></span>
     </div>
     <noscript><p class="hint">The live preview needs JavaScript. Use the template above and fill in the brackets yourself.</p></noscript>
@@ -73,6 +73,7 @@ const id = (name: string) => `${kind}-${name}`;
     const warn = root.querySelector<HTMLElement>('[data-warn]')!;
     const count = root.querySelector<HTMLElement>('[data-count]')!;
     const copy = root.querySelector<HTMLButtonElement>('[data-copy]')!;
+    const copyLabel = t.copyLabel ?? 'Copy message';
     copy.hidden = false;
 
     const read = (): Values => {
@@ -117,7 +118,7 @@ const id = (name: string) => `${kind}-${name}`;
         output.select();
         copy.textContent = 'Press Ctrl+C / Cmd+C to copy';
       }
-      setTimeout(() => (copy.textContent = 'Copy message'), 2500);
+      setTimeout(() => (copy.textContent = copyLabel), 2500);
     });
 
     render();

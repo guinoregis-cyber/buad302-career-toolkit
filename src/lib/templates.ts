@@ -25,6 +25,8 @@ export interface Field {
 }
 
 export interface Template {
+  /** Button text; defaults to "Copy message". */
+  copyLabel?: string;
   fields: Field[];
   defaults: Values;
   compose: (v: Values) => string;
@@ -262,4 +264,53 @@ const outreach: Template = {
   },
 };
 
-export const TEMPLATES: Record<string, Template> = { followup, outreach };
+/* ---------- LinkedIn: turn research into a reason ---------- */
+
+const research: Template = {
+  copyLabel: 'Copy note',
+  defaults: {},
+  fields: [
+    { name: 'role', label: 'The role or path you are exploring', type: 'text', placeholder: 'e.g., corporate finance at a tech company' },
+    {
+      name: 'observation',
+      label: 'What you noticed in their path',
+      type: 'text',
+      tag: 'required',
+      hint: 'Finishes the sentence "I noticed that you…"',
+      placeholder: 'e.g., moved from audit into corporate development after a few years',
+    },
+    {
+      name: 'question',
+      label: 'What you want to understand',
+      type: 'text',
+      tag: 'required',
+      hint: 'Finishes the sentence "I am trying to understand…"',
+      placeholder: 'e.g., what skills made that move possible',
+    },
+  ],
+  compose(v) {
+    const role = stripEnd(val(v, 'role')) || '[the role you are exploring]';
+    const obs = stripEnd(val(v, 'observation')) || '[what you noticed]';
+    const q = stripEnd(val(v, 'question')) || '[your question]';
+    return [
+      'RESEARCH NOTE',
+      `Exploring: ${role}`,
+      `What I noticed: ${obs}`,
+      `My question: ${q}`,
+      '',
+      'REASON TO REACH OUT',
+      '(Paste into "Why this person" in the Reach Out to Someone New playbook)',
+      '',
+      `I noticed that you ${obs}, and as someone exploring ${role}, I am trying to understand ${q}.`,
+    ].join('\n');
+  },
+  warnings(v) {
+    const msgs: string[] = [];
+    if (!val(v, 'observation')) msgs.push('Add one specific thing you noticed in their path. This is your reason to reach out.');
+    if (!val(v, 'question')) msgs.push('Add the question you want answered. It should be one their profile does not already answer.');
+    if (msgs.length === 0 && hasBrackets(this.compose(v))) msgs.push('Fill in the [brackets].');
+    return msgs;
+  },
+};
+
+export const TEMPLATES: Record<string, Template> = { followup, outreach, research };
