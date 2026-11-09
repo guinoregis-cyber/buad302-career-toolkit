@@ -21,8 +21,21 @@ const next = d.next ? all.find((p) => p.id === d.next) : undefined;
       <p class="eyebrow">{d.stages.map((s) => STAGES[s]).join(' · ')}</p>
       <h1>{d.title}</h1>
       <p class="lede">{d.summary}</p>
+      {d.whenToUse && <p class="when">{d.whenToUse}</p>}
       <p class="meta">{d.minutes} min read · {PILLARS[d.pillar]}</p>
     </header>
+    {d.quickSteps && (
+      <section class="glance" aria-labelledby="glance-title">
+        <h2 id="glance-title">At a glance</h2>
+        <ol>
+          {d.quickSteps.map((s) => (
+            <li><strong>{s.label}</strong> {s.detail}</li>
+          ))}
+        </ol>
+        {d.cta && <a class="button" href={d.cta.href}>{d.cta.label}</a>}
+        {d.courseLine && <p class="course-line"><span>BUAD 302 skills:</span> {d.courseLine}</p>}
+      </section>
+    )}
     <Content />
     {next && (
       <nav class="next" aria-label="Next playbook">

@@ -100,6 +100,64 @@ button.secondary { background: transparent; color: var(--accent); }
 .checklist label { display: flex; gap: 0.6rem; align-items: flex-start; cursor: pointer; }
 .checklist input { width: 1.15rem; height: 1.15rem; margin-top: 0.3rem; accent-color: var(--accent); }
 
+/* At a glance */
+.when { margin: 0 0 0.5rem; }
+.glance {
+  background: var(--surface);
+  border: 1px solid var(--neutral);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 0.25rem 1.25rem 1.25rem;
+  margin: 1.25rem 0 1rem;
+}
+.glance h2 { margin-top: 1rem; font-size: 1.1rem; }
+.glance ol { padding-left: 1.25rem; margin: 0.5rem 0 1rem; }
+.glance li { margin-bottom: 0.4rem; }
+.button {
+  display: inline-block;
+  font-weight: 600;
+  padding: 0.6rem 1.1rem;
+  border-radius: 6px;
+  background: var(--accent);
+  color: #fff;
+  text-decoration: none;
+}
+.course-line { font-size: 0.9rem; color: var(--muted); margin: 1rem 0 0; }
+.course-line span { font-weight: 600; color: var(--ink); }
+
+/* Small phones: keep the four steps and the main action on the first screen */
+@media (max-width: 30rem) {
+  .site-header { padding-top: 0.75rem; padding-bottom: 0.25rem; }
+  main { padding-top: 0.5rem; }
+  h1 { font-size: 1.75rem; margin-bottom: 0.5rem; }
+  .lede { font-size: 1.05rem; }
+  .when { font-size: 0.95rem; }
+  .playbook-head { padding-bottom: 0.75rem; }
+  .glance { margin-top: 0.75rem; padding: 0 1rem 1rem; }
+  .glance h2 { margin: 0.75rem 0 0; }
+  .glance ol { margin: 0.4rem 0 0.75rem; }
+  .glance li { margin-bottom: 0.2rem; line-height: 1.45; }
+}
+
+/* Expandable sections (native <details>: keyboard and no-JS friendly) */
+details {
+  background: var(--surface);
+  border: 1px solid var(--neutral);
+  border-radius: var(--radius);
+  margin: 0.75rem 0;
+}
+summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0.85rem 1.1rem;
+  list-style-position: inside;
+}
+summary:hover { color: var(--accent); }
+.summary-note { display: block; font-weight: 400; font-size: 0.85rem; color: var(--muted); margin-left: 1.1rem; }
+details > :not(summary) { margin-left: 1.1rem; margin-right: 1.1rem; }
+details[open] > summary { border-bottom: 1px solid var(--neutral); }
+details[open] { padding-bottom: 0.5rem; }
+
 .next { margin-top: 2.5rem; padding-top: 1.25rem; border-top: 1px solid var(--neutral); }
 .next a { font-size: 1.15rem; font-weight: 600; }
 

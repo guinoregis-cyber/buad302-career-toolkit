@@ -16,6 +16,11 @@ const playbooks = defineCollection({
     minutes: z.number(),
     order: z.number(),
     next: z.string().optional(),
+    // "At a glance" box at the top: what to do, without opening anything.
+    whenToUse: z.string().optional(),
+    quickSteps: z.array(z.object({ label: z.string(), detail: z.string() })).optional(),
+    courseLine: z.string().optional(),
+    cta: z.object({ label: z.string(), href: z.string() }).optional(),
   }),
 });
 
