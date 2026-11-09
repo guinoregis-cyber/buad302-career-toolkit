@@ -2,18 +2,44 @@
 import Base from '../layouts/Base.astro';
 import { SITE } from '../site.config';
 import { getCollection } from 'astro:content';
+import { STAGE_NEEDS, STAGES } from '../lib/labels';
+import { url } from '../lib/url';
 
 const playbooks = (await getCollection('playbooks')).sort((a, b) => a.data.order - b.data.order);
-import { url } from '../lib/url';
+const byStage = (stage: string) => playbooks.filter((p) => p.data.stages.includes(stage as never));
 ---
 <Base>
-  <h1>{SITE.name}</h1>
-  <p>{SITE.tagline}</p>
-  <p><em>Under construction. This page proves the publishing pipeline works.</em></p>
-  <h2>Playbooks</h2>
-  <ul>
-    {playbooks.map((p) => (
-      <li><a href={url(`playbooks/${p.id}/`)}>{p.data.title}</a> ({p.data.minutes} min)</li>
-    ))}
-  </ul>
+  <section class="hero">
+    <h1>{SITE.tagline}</h1>
+    <p class="lede">{SITE.intro}</p>
+  </section>
+
+  <section aria-labelledby="needs-title">
+    <h2 id="needs-title" class="section-title">What do you need help with?</h2>
+    <p class="meta">The six stages of recruiting, in order. Start wherever you are.</p>
+    <ol class="stage-grid">
+      {STAGE_NEEDS.map((s, i) => {
+        const items = byStage(s.id);
+        return (
+          <li class="stage-card" id={s.id}>
+            <p class="eyebrow"><span class="stage-num">{i + 1}</span> {STAGES[s.id]}</p>
+            <h3>{s.need}</h3>
+            <p class="stage-blurb">{s.blurb}</p>
+            {items.length > 0 ? (
+              <ul class="stage-links">
+                {items.map((p) => (
+                  <li>
+                    <a href={url(`playbooks/${p.id}/`)}>{p.data.title}</a>
+                    <span class="meta"> · {p.data.minutes} min</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p class="stage-empty">Playbooks for this stage are being written.</p>
+            )}
+          </li>
+        );
+      })}
+    </ol>
+  </section>
 </Base>
