@@ -1,52 +1,57 @@
 ---
-import { composeFollowUp, EMPTY } from '../lib/followup';
-const initial = composeFollowUp(EMPTY);
+import { TEMPLATES, type Values } from '../lib/templates';
+
+interface Props {
+  kind: keyof typeof TEMPLATES;
+}
+const { kind } = Astro.props;
+const t = TEMPLATES[kind];
+const v: Values = { ...t.defaults };
+const initial = t.compose(v);
+const id = (name: string) => `${kind}-${name}`;
 ---
-<div class="builder" data-builder>
+<div class="builder" data-builder={kind}>
   <form class="builder-form" onsubmit="return false">
-    <fieldset class="row">
-      <legend>Sending by</legend>
-      <label class="inline"><input type="radio" name="channel" value="email" checked /> Email</label>
-      <label class="inline"><input type="radio" name="channel" value="linkedin" /> LinkedIn message</label>
-    </fieldset>
-
-    <label for="mb-theirName">Their first name</label>
-    <input id="mb-theirName" name="theirName" type="text" autocomplete="off" placeholder="e.g., Jordan" />
-
-    <label for="mb-event">Where you met</label>
-    <input id="mb-event" name="event" type="text" autocomplete="off" placeholder="e.g., the Marshall finance panel" />
-
-    <label for="mb-detail">One specific thing they said that stuck with you <span class="req">(required)</span></label>
-    <p class="hint" id="mb-detail-hint">Write it so it finishes the sentence "I especially appreciated…"</p>
-    <input id="mb-detail" name="detail" type="text" autocomplete="off" aria-describedby="mb-detail-hint"
-      placeholder="e.g., your advice to talk to people on more than one team" />
-
-    <label for="mb-why">Why it mattered to you <span class="opt">(optional)</span></label>
-    <input id="mb-why" name="why" type="text" autocomplete="off"
-      placeholder="e.g., I had only been looking at one team, so I'm widening my search" />
-
-    <label for="mb-ask">Next step</label>
-    <select id="mb-ask" name="ask">
-      <option value="resource" selected>Ask if they'd recommend a person or resource</option>
-      <option value="question">Ask one specific question</option>
-      <option value="offered">They offered to help: take them up on it</option>
-      <option value="suggested">They suggested someone to contact</option>
-      <option value="stay">Say you'd like to stay in touch</option>
-      <option value="none">No ask, just thanks</option>
-    </select>
-
-    <div data-extra-wrap hidden>
-      <label for="mb-extra" data-extra-label>Details</label>
-      <input id="mb-extra" name="extra" type="text" autocomplete="off" />
-    </div>
-
-    <label for="mb-yourName">Your name</label>
-    <input id="mb-yourName" name="yourName" type="text" autocomplete="off" />
+    {t.fields.map((f) => {
+      if (f.type === 'radio') {
+        return (
+          <fieldset class="row">
+            <legend>{f.label}</legend>
+            {f.options!.map((o) => (
+              <label class="inline">
+                <input type="radio" name={f.name} value={o.value} checked={v[f.name] === o.value} /> {o.label}
+              </label>
+            ))}
+          </fieldset>
+        );
+      }
+      const spec = f.dynamic ? f.dynamic(v) : { label: f.label, placeholder: f.placeholder ?? '' };
+      const hintId = f.hint ? `${id(f.name)}-hint` : undefined;
+      return (
+        <div class="field" data-field={f.name} hidden={spec === null}>
+          <label for={id(f.name)}>
+            <span data-label>{spec?.label ?? f.label}</span>
+            {f.tag && <span class={f.tag === 'required' ? 'req' : 'opt'}> ({f.tag})</span>}
+          </label>
+          {f.hint && <p class="hint" id={hintId}>{f.hint}</p>}
+          {f.type === 'select' ? (
+            <select id={id(f.name)} name={f.name}>
+              {f.options!.map((o) => (
+                <option value={o.value} selected={v[f.name] === o.value}>{o.label}</option>
+              ))}
+            </select>
+          ) : (
+            <input id={id(f.name)} name={f.name} type="text" autocomplete="off"
+              placeholder={spec?.placeholder ?? ''} aria-describedby={hintId} />
+          )}
+        </div>
+      );
+    })}
   </form>
 
   <div class="builder-preview">
-    <label for="mb-output">Preview</label>
-    <textarea id="mb-output" readonly rows="14">{initial}</textarea>
+    <label for={id('output')}>Preview</label>
+    <textarea id={id('output')} readonly rows="16">{initial}</textarea>
     <p class="warn" data-warn role="status"></p>
     <div class="builder-actions">
       <button type="button" data-copy hidden>Copy message</button>
@@ -58,54 +63,49 @@ const initial = composeFollowUp(EMPTY);
 </div>
 
 <script>
-  import { composeFollowUp, wordCount, EXTRA_FIELD, type FollowUpFields } from '../lib/followup';
+  import { TEMPLATES, wordCount, type Values } from '../lib/templates';
 
   document.querySelectorAll<HTMLElement>('[data-builder]').forEach((root) => {
+    const t = TEMPLATES[root.dataset.builder!];
+    if (!t) return;
     const form = root.querySelector('form')!;
     const output = root.querySelector<HTMLTextAreaElement>('textarea')!;
     const warn = root.querySelector<HTMLElement>('[data-warn]')!;
     const count = root.querySelector<HTMLElement>('[data-count]')!;
     const copy = root.querySelector<HTMLButtonElement>('[data-copy]')!;
-    const extraWrap = root.querySelector<HTMLElement>('[data-extra-wrap]')!;
-    const extraLabel = root.querySelector<HTMLElement>('[data-extra-label]')!;
-    const extraInput = root.querySelector<HTMLInputElement>('#mb-extra')!;
     copy.hidden = false;
 
-    const read = (): FollowUpFields => {
+    const read = (): Values => {
       const d = new FormData(form);
-      const v = (k: string) => String(d.get(k) ?? '');
-      return {
-        channel: v('channel') === 'linkedin' ? 'linkedin' : 'email',
-        theirName: v('theirName'),
-        event: v('event'),
-        detail: v('detail'),
-        why: v('why'),
-        ask: v('ask') as FollowUpFields['ask'],
-        extra: v('extra'),
-        yourName: v('yourName'),
-      };
+      const v: Values = {};
+      t.fields.forEach((f) => (v[f.name] = String(d.get(f.name) ?? '')));
+      return v;
     };
 
     const render = () => {
-      const f = read();
-      const extraSpec = EXTRA_FIELD[f.ask];
-      extraWrap.hidden = !extraSpec;
-      if (extraSpec) {
-        extraLabel.textContent = extraSpec.label;
-        extraInput.placeholder = extraSpec.placeholder;
-      }
-      const text = composeFollowUp(f);
+      const v = read();
+      t.fields.filter((f) => f.dynamic).forEach((f) => {
+        const wrap = root.querySelector<HTMLElement>(`[data-field="${f.name}"]`)!;
+        const spec = f.dynamic!(v);
+        wrap.hidden = !spec;
+        if (spec) {
+          wrap.querySelector('[data-label]')!.textContent = spec.label;
+          wrap.querySelector('input')!.placeholder = spec.placeholder;
+        }
+      });
+      const text = t.compose(v);
       output.value = text;
       count.textContent = `${wordCount(text)} words`;
-      const msgs: string[] = [];
-      if (!f.detail.trim()) msgs.push('Add one specific detail. Without it, this reads like a message sent to everyone.');
-      if (extraSpec && !f.extra.trim()) msgs.push(`Fill in "${extraSpec.label}", or pick a different next step.`);
-      if (/\[[^\]]+\]/.test(text)) msgs.push('Fill in the [brackets] before sending.');
-      warn.textContent = msgs.join(' ');
+      warn.textContent = t.warnings(v).join(' ');
     };
 
-    // A different next step needs different details, so don't carry old text over.
-    root.querySelector('#mb-ask')!.addEventListener('change', () => (extraInput.value = ''));
+    // Clear dependent fields when the choice they depend on changes.
+    t.fields.filter((f) => f.resetWhen).forEach((f) => {
+      form.elements.namedItem(f.resetWhen!)?.addEventListener?.('change', () => {
+        (form.elements.namedItem(f.name) as HTMLInputElement).value = '';
+      });
+    });
+
     form.addEventListener('input', render);
     form.addEventListener('change', render);
 
