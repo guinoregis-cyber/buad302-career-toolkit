@@ -29,14 +29,15 @@ const initial = composeFollowUp(EMPTY);
     <select id="mb-ask" name="ask">
       <option value="resource" selected>Ask if they'd recommend a person or resource</option>
       <option value="question">Ask one specific question</option>
+      <option value="offered">They offered to help: take them up on it</option>
+      <option value="suggested">They suggested someone to contact</option>
       <option value="stay">Say you'd like to stay in touch</option>
       <option value="none">No ask, just thanks</option>
     </select>
 
-    <div data-question-wrap hidden>
-      <label for="mb-question">Your question</label>
-      <input id="mb-question" name="question" type="text" autocomplete="off"
-        placeholder="e.g., what skills helped you most in your first year" />
+    <div data-extra-wrap hidden>
+      <label for="mb-extra" data-extra-label>Details</label>
+      <input id="mb-extra" name="extra" type="text" autocomplete="off" />
     </div>
 
     <label for="mb-yourName">Your name</label>
@@ -57,7 +58,7 @@ const initial = composeFollowUp(EMPTY);
 </div>
 
 <script>
-  import { composeFollowUp, wordCount, type FollowUpFields } from '../lib/followup';
+  import { composeFollowUp, wordCount, EXTRA_FIELD, type FollowUpFields } from '../lib/followup';
 
   document.querySelectorAll<HTMLElement>('[data-builder]').forEach((root) => {
     const form = root.querySelector('form')!;
@@ -65,7 +66,9 @@ const initial = composeFollowUp(EMPTY);
     const warn = root.querySelector<HTMLElement>('[data-warn]')!;
     const count = root.querySelector<HTMLElement>('[data-count]')!;
     const copy = root.querySelector<HTMLButtonElement>('[data-copy]')!;
-    const qWrap = root.querySelector<HTMLElement>('[data-question-wrap]')!;
+    const extraWrap = root.querySelector<HTMLElement>('[data-extra-wrap]')!;
+    const extraLabel = root.querySelector<HTMLElement>('[data-extra-label]')!;
+    const extraInput = root.querySelector<HTMLInputElement>('#mb-extra')!;
     copy.hidden = false;
 
     const read = (): FollowUpFields => {
@@ -78,24 +81,31 @@ const initial = composeFollowUp(EMPTY);
         detail: v('detail'),
         why: v('why'),
         ask: v('ask') as FollowUpFields['ask'],
-        question: v('question'),
+        extra: v('extra'),
         yourName: v('yourName'),
       };
     };
 
     const render = () => {
       const f = read();
-      qWrap.hidden = f.ask !== 'question';
+      const extraSpec = EXTRA_FIELD[f.ask];
+      extraWrap.hidden = !extraSpec;
+      if (extraSpec) {
+        extraLabel.textContent = extraSpec.label;
+        extraInput.placeholder = extraSpec.placeholder;
+      }
       const text = composeFollowUp(f);
       output.value = text;
       count.textContent = `${wordCount(text)} words`;
       const msgs: string[] = [];
       if (!f.detail.trim()) msgs.push('Add one specific detail. Without it, this reads like a message sent to everyone.');
-      if (f.ask === 'question' && !f.question.trim()) msgs.push('Add your question, or pick a different next step.');
+      if (extraSpec && !f.extra.trim()) msgs.push(`Fill in "${extraSpec.label}", or pick a different next step.`);
       if (/\[[^\]]+\]/.test(text)) msgs.push('Fill in the [brackets] before sending.');
       warn.textContent = msgs.join(' ');
     };
 
+    // A different next step needs different details, so don't carry old text over.
+    root.querySelector('#mb-ask')!.addEventListener('change', () => (extraInput.value = ''));
     form.addEventListener('input', render);
     form.addEventListener('change', render);
 

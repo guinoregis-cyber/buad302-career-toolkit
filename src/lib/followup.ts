@@ -1,7 +1,7 @@
 // Builds the follow-up message. Used twice: on the server for the default
 // preview (so the page is useful without JavaScript) and in the browser as the user types.
 
-export type Ask = 'none' | 'stay' | 'question' | 'resource';
+export type Ask = 'none' | 'stay' | 'question' | 'resource' | 'offered' | 'suggested';
 export type Channel = 'email' | 'linkedin';
 
 export interface FollowUpFields {
@@ -11,7 +11,7 @@ export interface FollowUpFields {
   detail: string;
   why: string;
   ask: Ask;
-  question: string;
+  extra: string;
   yourName: string;
 }
 
@@ -22,8 +22,15 @@ export const EMPTY: FollowUpFields = {
   detail: '',
   why: '',
   ask: 'resource',
-  question: '',
+  extra: '',
   yourName: '',
+};
+
+// Asks that need one more field, with the label and placeholder for it.
+export const EXTRA_FIELD: Partial<Record<Ask, { label: string; placeholder: string }>> = {
+  question: { label: 'Your question', placeholder: 'e.g., what helped you most in your first year' },
+  offered: { label: 'What you would like help with', placeholder: 'e.g., a 15-minute call about how you chose your team' },
+  suggested: { label: 'Who they suggested you contact', placeholder: 'e.g., Sam Lee on the strategy team' },
 };
 
 const ph = (value: string, label: string) => value.trim() || `[${label}]`;
@@ -36,15 +43,18 @@ const sentence = (s: string) => {
 };
 
 function askLine(f: FollowUpFields): string {
+  const extra = f.extra.trim() ? stripEnd(f.extra) : '';
   switch (f.ask) {
     case 'stay':
       return 'I would be glad to stay in touch.';
-    case 'question': {
-      const q = f.question.trim() ? stripEnd(f.question) + '?' : '[your question]';
-      return `If you have a moment, I would value your perspective on one question: ${q}`;
-    }
+    case 'question':
+      return `If you have a moment, I would value your perspective on one question: ${extra ? extra + '?' : '[your question]'}`;
     case 'resource':
       return 'If there is anyone or anything you would recommend I look into as I learn more about this area, I would be grateful for the suggestion.';
+    case 'offered':
+      return `You kindly offered to help as I learn more about this area. If you are open to it, I would appreciate ${extra || '[what you would like help with]'}.`;
+    case 'suggested':
+      return `Thank you also for suggesting I reach out to ${extra || '[name]'}. I will contact them and let you know how it goes.`;
     default:
       return '';
   }
